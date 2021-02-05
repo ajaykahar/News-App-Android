@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">My News App</string>
+    <string name="top_headlines">Top Headlines</string>
+    <string name="date">DATE</string>
+    <string name="imageView_description">image from internet</string>
+    <string-array name="drop_down_array">
+        <item>relevancy</item>
+        <item>popularity</item>
+        <item>publishedAt</item>
+    </string-array>
+</resources>
