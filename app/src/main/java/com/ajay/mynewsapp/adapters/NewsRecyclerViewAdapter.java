@@ -1,6 +1,7 @@
 package com.ajay.mynewsapp.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,11 +13,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ajay.mynewsapp.R;
+import com.ajay.mynewsapp.UI.MainActivity;
+import com.ajay.mynewsapp.UI.NewsWebViewActivity;
 import com.ajay.mynewsapp.model.Article;
 import com.bumptech.glide.Glide;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -24,15 +28,8 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
 
     private List<Article> mArticleList;
 
-    AdapterClickListeners mClickListener;
-
-    public interface AdapterClickListeners {
-        void onArticleClickListener(Article article);
-    }
-
-    public NewsRecyclerViewAdapter(List<Article> articleList, AdapterClickListeners clickListener) {
+    public NewsRecyclerViewAdapter(List<Article> articleList) {
         mArticleList = articleList;
-        mClickListener = clickListener;
     }
 
     @NonNull
@@ -78,19 +75,10 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
             Context context = holder.imageView.getContext();
             Glide.with(context).load(imageUrlString).into(holder.imageView);
         }
-        holder.nli_heading.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mClickListener.onArticleClickListener(article);
-            }
-        });
     }
 
     @Override
     public int getItemCount() {
-        if (mArticleList == null) {
-            return 0;
-        }
         return mArticleList.size();
     }
 
@@ -111,6 +99,19 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
             nli_description = itemView.findViewById(R.id.nli_description);
             nli_date = itemView.findViewById(R.id.nli_date);
             imageView = itemView.findViewById(R.id.imageView);
+
+            nli_heading.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    int position = getAdapterPosition();
+                    Article article = mArticleList.get(position);
+                    Context context = view.getContext();
+                    Intent newsWebIntent = new Intent(context, NewsWebViewActivity.class);
+                    newsWebIntent.putExtra("ARTICLE", article);
+
+                    context.startActivity(newsWebIntent);
+                }
+            });
         }
     }
 

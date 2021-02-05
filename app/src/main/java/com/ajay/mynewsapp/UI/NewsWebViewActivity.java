@@ -3,7 +3,6 @@ package com.ajay.mynewsapp.UI;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -22,8 +21,7 @@ public class NewsWebViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_news_web_view);
 
-        Bundle arguments = getIntent().getExtras();
-        Article article = (Article) arguments.getSerializable("ARTICLE");
+        Article article = (Article) getIntent().getSerializableExtra("ARTICLE");
 
         String urlString = article.getUrl();
 

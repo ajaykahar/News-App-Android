@@ -1,5 +1,6 @@
 package com.ajay.mynewsapp.UI;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -11,6 +12,8 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AbsListView;
 
 import com.ajay.mynewsapp.apis.NewsApi;
 import com.ajay.mynewsapp.adapters.NewsRecyclerViewAdapter;
@@ -20,6 +23,7 @@ import com.ajay.mynewsapp.database.ArticlesDBHelper;
 import com.ajay.mynewsapp.model.Article;
 import com.ajay.mynewsapp.model.News;
 import com.ajay.mynewsapp.model.Source;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,30 +37,49 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import static com.ajay.mynewsapp.utils.AppConstants.API_LANGUAGE_CODE;
 import static com.ajay.mynewsapp.utils.AppConstants.NEWS_API_BASE_URL;
 import static com.ajay.mynewsapp.utils.AppConstants.NEWS_API_KEY;
+import static com.ajay.mynewsapp.utils.AppConstants.PAGE_SIZE;
 
-public class MainActivity extends AppCompatActivity implements NewsRecyclerViewAdapter.AdapterClickListeners {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private RecyclerView recyclerView;
 
-    private List<Article> articleList;
+    private List<Article> articleList = new ArrayList<>();
 
     private NewsRecyclerViewAdapter mAdapter;
 
     private SQLiteDatabase mDatabase;
     private ArticlesDBHelper mHelper;
 
+    LinearLayoutManager linearLayoutManager;
+    NewsApi newsApi;
+
+    FloatingActionButton floatingActionButton;
+
+    Boolean isScrolling = false;
+    int currentItems, totalItems, scrollOutItems;
+    int pageNumber=1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        floatingActionButton = findViewById(R.id.floatingActionButton);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent searchActivityIntent = new Intent(MainActivity.this, SearchActivity.class);
+                startActivity(searchActivityIntent);
+            }
+        });
         mHelper = new ArticlesDBHelper(getApplicationContext());
         mDatabase = mHelper.getWritableDatabase();
+        linearLayoutManager = new LinearLayoutManager(this);
 
         recyclerView = findViewById(R.id.news_recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mAdapter = new NewsRecyclerViewAdapter(articleList, MainActivity.this);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        mAdapter = new NewsRecyclerViewAdapter(articleList);
         recyclerView.setAdapter(mAdapter);
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -64,17 +87,45 @@ public class MainActivity extends AppCompatActivity implements NewsRecyclerViewA
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        NewsApi newsApi = retrofit.create(NewsApi.class);
+        newsApi = retrofit.create(NewsApi.class);
 
-        Call<News> call = newsApi.getNews(API_LANGUAGE_CODE, NEWS_API_KEY);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+                    isScrolling = true;
+                }
+            }
 
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                currentItems = linearLayoutManager.getChildCount();
+                totalItems = linearLayoutManager.getItemCount();
+                scrollOutItems = linearLayoutManager.findFirstVisibleItemPosition();
+
+                if (isScrolling && (currentItems + scrollOutItems == totalItems)){
+                    isScrolling = false;
+                    getNewsDataFromApi();
+                }
+            }
+        });
+
+        getNewsDataFromApi();
+    }
+
+    private void getNewsDataFromApi() {
+        Log.i(TAG, "getNewsDataFromApi: called");
+
+        Call<News> call = newsApi.getNews(API_LANGUAGE_CODE,pageNumber,PAGE_SIZE, NEWS_API_KEY);
         call.enqueue(new Callback<News>() {
             @Override
             public void onResponse(Call<News> call, Response<News> response) {
                 if (response.isSuccessful()) {
                     News news = response.body();
-                    articleList = news.getArticles();
-                    mAdapter.swapList(articleList);
+                    articleList.addAll(news.getArticles());
+                    mAdapter.notifyDataSetChanged();
                     for (Article article : news.getArticles()) {
                         Log.d(TAG, "onResponse: Article Title : " + article.getTitle());
                         Log.d(TAG, "onResponse: Inserting this article into database. ");
@@ -84,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements NewsRecyclerViewA
                             Log.e(TAG, "onResponse: ", exception);
                         }
                     }
+                    pageNumber++;
                 }
 
             }
@@ -143,11 +195,4 @@ public class MainActivity extends AppCompatActivity implements NewsRecyclerViewA
         mDatabase.insert(ArticlesContract.ArticleEntry.TABLE_NAME, null, contentValues);
     }
 
-    @Override
-    public void onArticleClickListener(Article article) {
-        Intent newsWebIntent = new Intent(MainActivity.this, NewsWebViewActivity.class);
-        newsWebIntent.putExtra("ARTICLE", article);
-
-        startActivity(newsWebIntent);
-    }
 }
