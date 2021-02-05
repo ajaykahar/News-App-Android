@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 
 import com.ajay.mynewsapp.R;
@@ -43,6 +44,7 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
     String searchString = "";
 
     private RecyclerView recyclerView;
+    ProgressBar progressBar2;
 
     private List<Article> articleList = new ArrayList<>();
 
@@ -57,6 +59,10 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
         searchButton = findViewById(R.id.buttonSearch);
         editTextSearch = findViewById(R.id.editTextSearch);
         recyclerView = findViewById(R.id.searchRecyclerView);
+        recyclerView.setVisibility(View.GONE);
+
+        progressBar2 = findViewById(R.id.progressBar2);
+        progressBar2.setVisibility(View.GONE);
 
         // array adapter for spinner(drop down menu)
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -72,6 +78,7 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                progressBar2.setVisibility(View.VISIBLE);
                 searchArticles();
             }
         });
@@ -79,6 +86,7 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
     }
 
     private void searchArticles() {
+
         searchString = editTextSearch.getText().toString();
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -96,6 +104,8 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
                     News news = response.body();
                     articleList = news.getArticles();
                     mAdapter.swapList(articleList);
+                    progressBar2.setVisibility(View.GONE);
+                    recyclerView.setVisibility(View.VISIBLE);
 //                    for (Article article : news.getArticles()) {
 //                        Log.d(TAG, "onResponse: Article Title : " + article.getTitle());
 //                    }

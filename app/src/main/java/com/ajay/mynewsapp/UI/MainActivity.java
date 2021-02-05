@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.ProgressBar;
 
 import com.ajay.mynewsapp.apis.NewsApi;
 import com.ajay.mynewsapp.adapters.NewsRecyclerViewAdapter;
@@ -60,10 +61,13 @@ public class MainActivity extends AppCompatActivity {
     int currentItems, totalItems, scrollOutItems;
     int pageNumber=1;
 
+    ProgressBar progressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        progressBar = findViewById(R.id.progressBar);
 
         floatingActionButton = findViewById(R.id.floatingActionButton);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
@@ -118,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
     private void getNewsDataFromApi() {
         Log.i(TAG, "getNewsDataFromApi: called");
 
+        progressBar.setVisibility(View.VISIBLE);
+
         Call<News> call = newsApi.getNews(API_LANGUAGE_CODE,pageNumber,PAGE_SIZE, NEWS_API_KEY);
         call.enqueue(new Callback<News>() {
             @Override
@@ -126,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
                     News news = response.body();
                     articleList.addAll(news.getArticles());
                     mAdapter.notifyDataSetChanged();
+                    progressBar.setVisibility(View.GONE);
                     for (Article article : news.getArticles()) {
                         Log.d(TAG, "onResponse: Article Title : " + article.getTitle());
                         Log.d(TAG, "onResponse: Inserting this article into database. ");
@@ -145,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "onFailure: called");
                 Log.e(TAG, "onFailure: ", t);
                 retrieveArticlesFromDatabase();
+                progressBar.setVisibility(View.GONE);
             }
         });
     }
