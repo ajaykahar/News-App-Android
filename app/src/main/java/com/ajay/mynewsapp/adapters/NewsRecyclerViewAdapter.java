@@ -54,18 +54,7 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
 
         holder.nli_description.setText(article.getDescription());
 
-        SimpleDateFormat input = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        SimpleDateFormat output = new SimpleDateFormat("dd/MM/yyyy");
-        Date d = null;
-        try {
-            d = input.parse(article.getPublishedAt());
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        assert d != null;
-        String formattedDate = output.format(d);
-        Log.i("DATE", "" + formattedDate);
-        holder.nli_date.setText(String.format("Publish Date : %s", formattedDate));
+        holder.nli_date.setText(String.format("Publish Date : %s", article.getFormattedDate()));
 
         String imageUrlString = article.getUrlToImage();
         if (imageUrlString == null || imageUrlString.equals("")) {

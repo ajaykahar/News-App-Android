@@ -1,9 +1,14 @@
 package com.ajay.mynewsapp.model;
 
+import android.util.Log;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Article implements Serializable {
     @SerializedName("source")
@@ -94,5 +99,19 @@ public class Article implements Serializable {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getFormattedDate() {
+        SimpleDateFormat input = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        SimpleDateFormat output = new SimpleDateFormat("dd/MM/yyyy");
+        Date d = null;
+        try {
+            d = input.parse(getPublishedAt());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String formattedDate = output.format(d);
+        Log.i("DATE", "" + formattedDate);
+        return formattedDate;
     }
 }

@@ -21,9 +21,6 @@ public interface NewsApi {
                        @Query("apiKey") String apiKey);
 
 
-
-
-
     @GET("everything")
     Call<News> getSearchedNews(@Query("q") String searchString,
                                @Query("sortBy") String sortBy,

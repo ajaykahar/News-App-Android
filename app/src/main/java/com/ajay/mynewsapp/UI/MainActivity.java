@@ -2,6 +2,7 @@ package com.ajay.mynewsapp.UI;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,6 +26,8 @@ import com.ajay.mynewsapp.model.Article;
 import com.ajay.mynewsapp.model.News;
 import com.ajay.mynewsapp.model.Source;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,15 +62,18 @@ public class MainActivity extends AppCompatActivity {
 
     Boolean isScrolling = false;
     int currentItems, totalItems, scrollOutItems;
-    int pageNumber=1;
+    int pageNumber = 1;
 
     ProgressBar progressBar;
+
+    ConstraintLayout constraintLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         progressBar = findViewById(R.id.progressBar);
+        constraintLayout = findViewById(R.id.main_parent);
 
         floatingActionButton = findViewById(R.id.floatingActionButton);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
@@ -109,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
                 totalItems = linearLayoutManager.getItemCount();
                 scrollOutItems = linearLayoutManager.findFirstVisibleItemPosition();
 
-                if (isScrolling && (currentItems + scrollOutItems == totalItems)){
+                if (isScrolling && (currentItems + scrollOutItems == totalItems)) {
                     isScrolling = false;
                     getNewsDataFromApi();
                 }
@@ -124,14 +130,15 @@ public class MainActivity extends AppCompatActivity {
 
         progressBar.setVisibility(View.VISIBLE);
 
-        Call<News> call = newsApi.getNews(API_LANGUAGE_CODE,pageNumber,PAGE_SIZE, NEWS_API_KEY);
+        Call<News> call = newsApi.getNews(API_LANGUAGE_CODE, pageNumber, PAGE_SIZE, NEWS_API_KEY);
         call.enqueue(new Callback<News>() {
             @Override
             public void onResponse(Call<News> call, Response<News> response) {
                 if (response.isSuccessful()) {
                     News news = response.body();
+                    int positionStart = articleList.size();
                     articleList.addAll(news.getArticles());
-                    mAdapter.notifyDataSetChanged();
+                    mAdapter.notifyItemRangeInserted(positionStart, news.getArticles().size());
                     progressBar.setVisibility(View.GONE);
                     for (Article article : news.getArticles()) {
                         Log.d(TAG, "onResponse: Article Title : " + article.getTitle());
@@ -151,11 +158,13 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(Call<News> call, Throwable t) {
                 Log.d(TAG, "onFailure: called");
                 Log.e(TAG, "onFailure: ", t);
+                showSnackBar();
                 retrieveArticlesFromDatabase();
                 progressBar.setVisibility(View.GONE);
             }
         });
     }
+
 
     private void retrieveArticlesFromDatabase() {
         Cursor cursor = mDatabase.query(ArticlesContract.ArticleEntry.TABLE_NAME,
@@ -203,4 +212,8 @@ public class MainActivity extends AppCompatActivity {
         mDatabase.insert(ArticlesContract.ArticleEntry.TABLE_NAME, null, contentValues);
     }
 
+    private void showSnackBar() {
+        Snackbar snackbar = Snackbar.make(constraintLayout, "Retrieving data from server failed, loading data from cached database.", BaseTransientBottomBar.LENGTH_SHORT);
+        snackbar.show();
+    }
 }
